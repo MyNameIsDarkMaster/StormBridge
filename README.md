@@ -32,7 +32,6 @@ I2C:
 JTAG/SWD:  
 - Возможность внутрисхемного программирования и отладки микроконтроллеров имеющих возможность работать через интерфейс SWD и JTAG (TCK,TDI,TDO,TMS) через GDB/OpenOCD. 
 - Краткий список поддерживаемых устройств приведен на сайте OpenOCD и выглядит следующим образом:
-
 Debug targets:  
 ARM: AArch64, ARM11, ARM7, ARM9, Cortex-A/R (v7-A/R), Cortex-M (ARMv{6/7/8}-M),
 FA526, Feroceon/Dragonite, XScale.
