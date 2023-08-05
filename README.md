@@ -126,15 +126,16 @@ GPIO:
 - пин AD7 подтянут к 3.3в через 51кОм, а так же служит катодом для светодиода "Flash".
 
 Функциональное назначение:  
-GPIO - UART - SPI - JTAG - I2C:
-- AD0 - TX  - SCLK - TCK - SCK
-- AD1 - RX  - MOSI - TDI - SDA/O
-- AD2 - RTS - MISO - TDO - SDA/I
-- AD3 - CTS - CS   - TMS
-- AD4 - DTR - CS1
-- AD5 - DSR - CS2
-- AD6 - DCD - CS3
-- AD7 - RI  - CS4  - RCLK - RSCK
+| GPIO   | UART   | SPI    | JTAG   | I2C    |
+| ------ | ------ | ------ | ------ | ------ |
+| AD0    | TX     | SCLK   | TCK    | SCK    |
+| AD1    | RX     | MOSI   | TDI    | SDA/O  |
+| AD2    | RTS    | MISO   | TDO    | SDA/I  |
+| AD3    | CTS    | CS     | TMS    |        |
+| AD4    | DTR    | CS1    |        |        |
+| AD5    | DSR    | CS2    |        |        |
+| AD6    | DCD    | CS3    |        |        |
+| AD7    | RI     | CS4    | RCLK   | RSCK   |
 
 
 # Инструкция по эксплуатации Linux
