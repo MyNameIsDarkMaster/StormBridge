@@ -177,7 +177,7 @@ Please specify which chip definition to use with the -c <chipname> option.
 ```
 flashrom-dev -p ft2232_spi:type=232H,divisor=10,gpiol3=L -c "MT25QU256" -w rom.bin --progress
 ```  
-где ```e01-lvds.bin``` файл прошивки, а ключ ```--progress``` позволяет видеть прогресс загрузки  
+где ```rom.bin``` файл прошивки, а ключ ```--progress``` позволяет видеть прогресс загрузки  
 
 ## Прошивка и отладка микроконтроллеров через OpenOCD
 
