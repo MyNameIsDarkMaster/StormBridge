@@ -175,7 +175,7 @@ Please specify which chip definition to use with the -c <chipname> option.
 
 пример команды для прошивки с верификацией:  
 ```
-flashrom-dev -p ft2232_spi:type=232H,divisor=10,gpiol3=L -c "MT25QU256" -w e01-lvds.bin --progress
+flashrom-dev -p ft2232_spi:type=232H,divisor=10,gpiol3=L -c "MT25QU256" -w rom.bin --progress
 ```  
 где ```e01-lvds.bin``` файл прошивки, а ключ ```--progress``` позволяет видеть прогресс загрузки  
 
