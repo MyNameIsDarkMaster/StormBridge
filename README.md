@@ -10,7 +10,7 @@
 - [Назначение боковых микропереключателей и разъемов](#микропереключатели-и-разъемы)
 - Инструкция по эксплуатации Linux
   - [Прошивка SPI-Flash памяти с помощью flashrom v 1.3+](#прошивка-spi-flash-памяти-с-помощью-flashrom-v-13)
-  - Настройка связки VSCode-OpenOCD для отладки STM32F1
+  - Прошивка и отладка микроконтроллеров через OpenOCD
   - Опрос I2C устройства с помощью библиотеки PyFTDI  
 - Полезные ссылки и файлы
 
@@ -144,8 +144,10 @@ GPIO:
 
 
 # Инструкция по эксплуатации в Linux
-## Прошивка SPI-Flash памяти с помощью flashrom v 1.3+
+
 :warning: ***Предполагается что пользователь, следующий данной инструкции, имеет базовые представления о том как пользоваться консолью Linux, в том числе с повышенными привилегиями, устанавливать пакеты в своей системе, пользоваться поисковыми системами для устранения возможных сообщений об ошибках.***
+
+## Прошивка SPI-Flash памяти с помощью flashrom v 1.3+
 
 Для начала нужно собрать ***flashrom*** версии не ниже **1.3** из [исходного кода](https://github.com/flashrom/flashrom), перед сборкой в системе необходимо иметь библиотеки ***libftdi*** и ***libusb***.  
 Если в системе уже есть *flashrom* другой версии, для удобной работы можно создать симлинк собранной версии программы, но с другим именем в директории ```/usr/bin```, например команда ```# ln -s flashrom /usr/bin/flashrom-dev```, запущенная в директории с собранной программой, создаст симлинк и позволит использовать команду ```flashrom-dev``` из любого каталога.
@@ -157,11 +159,11 @@ flashrom-dev -p ft2232_spi:type=232H,divisor=2,gpiol3=L
 где:
 ```-p ft2232_spi:type=232H,divisor=2,gpiol3=L``` - выбор программатора и параметров обмена;  
 параметр ```divisor=2``` - настройка частоты обмена по формуле ```60_Мгц / divisor```, **divisor** может быть только целым четным числом от **2 до 2^17 (= 131072)**. Стабильная частота для конкретного чипа и шлейфа подбирается опытным путем, рекомендуемо для внутрисхемной прошивки выбирать **divisor** не меньше 6 (то есть 10_Мгц и меньше);  
-параметр ```gpiol3=L``` - активация преобразователя логических уровней, через **gpio AD7**.
+параметр ```gpiol3=L``` - активация преобразователя логических уровней, через **gpio AD7**.  
 
-:fire: Для работы с чипами рекомендуется ознакомиться с [инструкцией на flashrom](https://github.com/flashrom/flashrom/blob/master/doc/classic_cli_manpage.rst), среди удобных функций рекомендуется обратить внимание на возможность работы с регионами памяти через файл layout.
+:fire: Для работы с чипами рекомендуется ознакомиться с [инструкцией на flashrom](https://github.com/flashrom/flashrom/blob/master/doc/classic_cli_manpage.rst), среди удобных функций рекомендуется обратить внимание на возможность работы с регионами памяти через файл layout.  
 
-Иногда для корректной работы нужно указать непосредственно название чипа памяти, о чем подскажет вывод в консоль, например:
+Иногда для корректной работы нужно указать непосредственно название чипа памяти, о чем подскажет вывод в консоль, например:  
 ```
 Found Micron/Numonyx/ST flash chip "N25Q512..1G" (65536 kB, SPI) on ft2232_spi.
 Found Micron flash chip "MT25QU512" (65536 kB, SPI) on ft2232_spi.
@@ -170,8 +172,137 @@ Please specify which chip definition to use with the -c <chipname> option.
 ```
 в данном случае следует выбрать чип из предложенных, например ```... -с MT25QU512```
 
-пример команды для прошивки с верификацией
+пример команды для прошивки с верификацией:
 ```flashrom-dev -p ft2232_spi:type=232H,divisor=10,gpiol3=L -c "MT25QU256" -w e01-lvds.bin --progress```
-где ```e01-lvds.bin``` файл прошивки, а ключ ```--progress``` позволяет видеть прогресс загрузки
+где ```e01-lvds.bin``` файл прошивки, а ключ ```--progress``` позволяет видеть прогресс загрузки  
 
+## Прошивка и отладка микроконтроллеров через OpenOCD
 
+*Для примера выбрана IDE VS-Code и микроконтроллер STM32F103C8T6. IDE и контроллер могут быть любыми, которые поддерживают отладку через OpenOCD.*  
+*Начальный код сгенерирован STM32CubeMX*  
+*Действия производились в ArchLinux на ядре 6.4.8-arch1-1 (64-бита), с установленным пакетным менеджером* **yay**  
+
+```
+sudo pacman -Sy openocd $(pacman -Ssq arm-none-eabi) clang ninja cmake llvm meson
+yay -Sy visual-studio-code-bin stm32cubemx
+```
+Далее установливаются расширения в VS-Code:  
+```
+ms-vscode.cpptools-extension-pack
+marus25.cortex-debug
+mcu-debug.memory-view
+rioj7.command-variable
+actboy168.tasks
+cschlosser.doxdocgen
+```
+### В начальный код сгенерируется в CubeMX:
+**file -> new project ->**  
+**(в строке поиска открывшегося селектора) commercial part number: stm32f103c8t6**  
+в правом нижнем углу появляются результаты поиска, выделяется нужный МК, далее вкладка **docs & resources**, находится **system view description**, скачивается архив с svd файлами, которые понадобятся для проекта.  
+Далее кнопка **start project** -> *конфигурация МК в зависимости от отладочной платы, или проекта.*  
+Для удобства отлададки и снятия необходимости переводить плату в "загрузочный" режим сразу настраивается отладочный интерфейс **system core -> sys -> debug: serial wire**.  
+После настройки интерфейсов, модулей и используемых частот, вкладка **project manager ->** вкладка **project**  
+**project name: projectname**  
+**project location: .../stm32projects**  
+**toolchain/ide: makefile**  
+Вкладка **code generator -> stm32cube mcu packages and embedded software packs**  
+тут можно выбрать копировать файлы библиотек в каталог, или использовать ссылки на библиотеки.  
+Далее кнопка **generate code**. На этом CubeMX можно закрыть.  
+
+### Настройка задач отладки в VS-Code:
+В каталог с проектом .../stm32projects/projectname копируется скачанный ранее файл svd под нужную серию МК (stm32f103.svd).  
+В нем же создается подкаталог ```.vscode```, внутри которого создаются файлы ```launch.json``` и ```tasks.json``` со следующим содержимым:  
+
+<details>
+<summary>launch.json</summary>
+
+```json
+{
+	"version": "2.0.0",
+	"configurations": [
+		{
+			"name": "OCD-Debug",
+			"type": "cortex-debug",
+			"request": "launch",
+			"cwd": "${workspaceRoot}",
+			"servertype": "openocd",
+			"executable": "./build/${workspaceFolderBasename}.elf",
+			"svdFile": "STM32F103.svd",
+			"configFiles": [
+				"interface/ftdi/ft232h-module-swd.cfg",
+				"target/stm32f1x.cfg"
+			],
+			"runToEntryPoint": "main",
+			"showDevDebugOutput": "none",
+			"preLaunchTask": "Build"
+		},
+		{
+			"name": "OCD-Flash",
+			"type": "cortex-debug",
+			"request": "launch",
+			"cwd": "${workspaceRoot}",
+			"servertype": "openocd",
+			"executable": "./build/${workspaceFolderBasename}.elf",
+			"svdFile": "STM32F103.svd",
+			"configFiles": [
+				"interface/ftdi/ft232h-module-swd.cfg",
+				"target/stm32f1x.cfg"
+			],
+			"preLaunchTask": "Write firmware"
+		}
+	]
+}
+
+```
+</details>
+
+<details>
+<summary>tasks.json</summary>
+
+```json
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build",
+            "type": "shell",
+            "group": "build",
+            "command": "make",
+            "problemMatcher": []
+        },
+        {
+            "label": "Clean",
+            "type": "shell",
+            "group": "build",
+            "command": "make clean",
+            "problemMatcher": []
+        },
+        {
+            "label": "Write firmware",
+            "type": "shell",
+            "command": "make clean \n make \n openocd -f interface/ftdi/ft232h-module-swd.cfg -f target/stm32f1x.cfg -c 'program ./build/${workspaceFolderBasename}.bin verify reset exit' ",
+            "problemMatcher": []
+        }
+    ]
+}
+```
+</details>
+
+После этого каталог с проектом открывается в vscode через контекстное меню. Подтверждается доверие авторам файлов в каталоге.  
+
+### Подключение МК и отладка
+Подключение МК к устройству производится согласно [назначению разъемов](#микропереключатели-и-разъемы).
+В случве с STM32F1 это SWD интерфейс:  
+| GPIO    | STM32 |
+| ------- | ----- |
+| AD0     | SWCLK |
+| AD1,AD2 | SWDIO |
+| 3.3v    | 3.3v  |
+| GND     | GND   |  
+
+Чтобы объеденить AD1 и AD2 активируется микропереключатель SW:10(SDA2).  
+
+После этого устройство подключается к хосту.  
+В VS-Code во вкладке **Запуск и отладкв** должны быть доступны созданные ранее задачи: **OCD-Debug** и **OCD-Flash**.  
+* ***OCD-Debug*** - стандартная сборка и отладка проекта.  
+* ***OCD-Flash*** - может пригодиться для прошивки МК без отладки, но сессию все равно придется закрывать вручную.  
