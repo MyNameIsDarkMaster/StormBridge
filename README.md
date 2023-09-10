@@ -12,7 +12,12 @@
   - [Прошивка SPI-Flash памяти с помощью flashrom v 1.3+](#прошивка-spi-flash-памяти-с-помощью-flashrom-v-13)
   - [Прошивка и отладка микроконтроллеров через OpenOCD](#прошивка-и-отладка-микроконтроллеров-через-openocd)
   - Опрос I2C устройства с помощью библиотеки PyFTDI  
-- Полезные ссылки и файлы
+- [Инструкция по эксплуатации в Windows](#инструкция-по-эксплуатации-в-windows)
+  - [UART](#uart)
+  - [WinUSB Drivers](#winusb-drivers)
+  - [SPI (на примере flashrom)](#spi-на-примере-flashrom)
+  - [SWD (На примере CubeIDE)](#swd-на-примере-cubeide)
+- [Полезные файлы и ссылки](#полезные-файлы-и-ссылки)  
 
 
 ## Основные функции  
@@ -312,3 +317,62 @@ cschlosser.doxdocgen
 В VS-Code во вкладке ***Запуск и отладка*** должны быть доступны созданные ранее задачи: ***OCD-Debug*** и ***OCD-Flash***.  
 * ***OCD-Debug*** - стандартная сборка и отладка проекта.  
 * ***OCD-Flash*** - может пригодиться для прошивки МК без отладки, но сессию все равно придется закрывать вручную.  
+
+# Инструкция по эксплуатации в Windows
+## UART
+Драйверы для работы с UART можно загрузить с [сайта производителя] (https://ftdichip.com/drivers/vcp-drivers/)  
+Так же драйверы и утилиты использующиеся в инструкции имеются в [архивах](Windows_Files) (openocd/drivers)  
+Устройство должно определиться как стандартный COM-Port.  
+## WinUSB Drivers
+Для работы Flashrom и OpenOCD необходимо заменить драйверы на WinUSB, для этого:  
+Запускаем Zadig, вкладка options - чекбокс List All Devices.  
+Из выпадающего списка выбираем устройство Storm_Bridge, драйвер выбираем WinUSB, нажимает кнопку Replace Driver.  
+При успешной замене драйверов устройство должно переместиться в класс "Устройства USB". Соответственно стандартный COM-Port более не будет доступен  
+Для быстрой подмены уже имеющихся драйверов в архиве c openocd имеется утилита UsbDriverTool.exe.  
+## SPI (на примере flashrom)
+Для работы с Flashrom распаковываем архив с предварительно компилированной программой.  
+Так же можно собрать Flashrom самостоятельно, подробнее на https://github.com/flashrom/flashrom .
+В папке с flashrom.exe открываем командную строку. Команды для работы аналогичны инструкции для Linux:  
+для запроса типа подключенной микросхемы ```flashrom -p ft2232_spi:type=232H,divisor=2,gpiol3=L```  
+## SWD (На примере CubeIDE)
+Открываем CubeIDE создаем проект, для теста выбран STM32F103C8T6.  
+Настраиваем периферию. Сохраняем, генерируется начальный код.  
+Открываем вкладку Run - External Tools - External Tools Configurations  
+Нажимаем кнопку New lauch configurations.  
+
+Для удобства называем новую конфигурацию GDB_C8T6.  
+Location: patchto\openocd-20230202\OpenOCD-20230202-0.12.0\bin\openocd.exe  
+Working Directory: patchto\openocd-20230202\OpenOCD-20230202-0.12.0\  
+Arguments: -f interface/ftdi/ft232h-module-swd.cfg -f target/stm32f1x.cfg  
+Сохраняем.  
+
+Вкладка Run - Debug Configurations  
+Создаем новую конфигурацию в STM32 Cortex-M C/C++ Application  
+Для удобства называем новую конфигурацию OpenOCD_C8T6.  
+Во вкладке Debugger созданного проекта:  
+Connect to remote GDB server  
+Port nimber 3333  
+Debug probe ST-LINK (OpenOCD)  
+снять чекбокс Enable live expressions  
+Сохраняем.  
+
+Для удобства создаем Launch Group  
+Называем C8T6  
+Добавляем созданный ранее GDB_C8T6  
+Launch mode: Run  
+установить чекбокс Adopt launch if already running.  
+ОК  
+Добавляем созданный ранее OpenOCD_C8T6  
+Launch mode: Debug  
+установить чекбокс Adopt launch if already running  
+ОК - Сохраняем.  
+ 
+Теперь в выпадающем списке отладки должна быть доступна созданная группа запуска, нажав на нее начнется отладка.  
+
+# Полезные файлы и ссылки:
+ - [FTDI FT232H](http://www.ftdichip.com/Support/Documents/DataSheets/ICs/DS_FT232H.pdf)
+ - [flashrom](https://github.com/flashrom/flashrom)
+ - [PyFTDI](https://eblot.github.io/pyftdi/)
+ - [Файлы для Windows](Windows_Files)
+
+
