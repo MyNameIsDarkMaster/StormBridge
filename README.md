@@ -320,7 +320,7 @@ cschlosser.doxdocgen
 
 # Инструкция по эксплуатации в Windows
 ## UART
-Драйверы для работы с UART можно загрузить с [сайта производителя] (https://ftdichip.com/drivers/vcp-drivers/)  
+Драйверы для работы с UART можно загрузить с [сайта производителя](https://ftdichip.com/drivers/vcp-drivers/)  
 Так же драйверы и утилиты использующиеся в инструкции имеются в [архивах](Windows_Files) (openocd/drivers)  
 Устройство должно определиться как стандартный COM-Port.  
 ## WinUSB Drivers
